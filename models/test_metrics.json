@@ -1,0 +1,8 @@
+{
+  "metrics": {
+    "accuracy": 0.7388218594748048,
+    "f1": 0.6142557651991615,
+    "roc_auc": 0.8417034798108968
+  },
+  "classification_report": "              precision    recall  f1-score   support\n\n    No Churn       0.90      0.72      0.80      1035\n       Churn       0.51      0.78      0.61       374\n\n    accuracy                           0.74      1409\n   macro avg       0.70      0.75      0.71      1409\nweighted avg       0.80      0.74      0.75      1409\n"
+}
