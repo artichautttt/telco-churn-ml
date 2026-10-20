@@ -7,5 +7,10 @@ xgboost==3.4.1
 shap==0.52.0
 joblib==1.6.0
 pytest==9.1.1
+mlflow==3.16.1
+fastapi==0.141.1
+pydantic==2.13.5
+uvicorn==0.54.0
+httpx==0.28.1
 jupyter
 jupytext

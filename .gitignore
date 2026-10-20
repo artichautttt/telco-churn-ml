@@ -5,3 +5,4 @@ __pycache__/
 .pytest_cache/
 data/processed/*.csv
 models/*.pkl
+mlruns/
