@@ -1,0 +1,209 @@
+{
+  "bootstrap": {
+    "LogisticRegression": {
+      "auc": {
+        "point": 0.8417034798108968,
+        "ci95": [
+          0.8187563059569077,
+          0.8624262029704736
+        ]
+      },
+      "recall": {
+        "point": 0.7834224598930482,
+        "ci95": [
+          0.7394651029748284,
+          0.821454214845207
+        ]
+      },
+      "n_boot": 1000
+    },
+    "XGBClassifier": {
+      "auc": {
+        "point": 0.8311607119791264,
+        "ci95": [
+          0.8055966269116918,
+          0.8530663853515186
+        ]
+      },
+      "recall": {
+        "point": 0.7486631016042781,
+        "ci95": [
+          0.7053132419865453,
+          0.7908341832192057
+        ]
+      },
+      "n_boot": 1000
+    }
+  },
+  "shap_stability": {
+    "folds": {
+      "spearman_mean": 0.9391608391608394,
+      "spearman_min": 0.8881118881118882,
+      "top_overlap_mean": 0.9200000000000002,
+      "top_overlap_min": 0.8,
+      "n_features_in_union": 12,
+      "top10_per_run": [
+        [
+          "Contract",
+          "tenure",
+          "MonthlyCharges",
+          "TotalCharges",
+          "PaymentMethod",
+          "OnlineSecurity",
+          "TechSupport",
+          "InternetService",
+          "PaperlessBilling",
+          "StreamingMovies"
+        ],
+        [
+          "Contract",
+          "tenure",
+          "MonthlyCharges",
+          "TotalCharges",
+          "OnlineSecurity",
+          "InternetService",
+          "PaymentMethod",
+          "TechSupport",
+          "MultipleLines",
+          "PaperlessBilling"
+        ],
+        [
+          "Contract",
+          "tenure",
+          "MonthlyCharges",
+          "TotalCharges",
+          "PaymentMethod",
+          "OnlineSecurity",
+          "InternetService",
+          "TechSupport",
+          "PaperlessBilling",
+          "MultipleLines"
+        ],
+        [
+          "Contract",
+          "tenure",
+          "TotalCharges",
+          "MonthlyCharges",
+          "OnlineSecurity",
+          "InternetService",
+          "PaymentMethod",
+          "TechSupport",
+          "PaperlessBilling",
+          "MultipleLines"
+        ],
+        [
+          "Contract",
+          "tenure",
+          "MonthlyCharges",
+          "TotalCharges",
+          "OnlineSecurity",
+          "TechSupport",
+          "PaymentMethod",
+          "MultipleLines",
+          "InternetService",
+          "OnlineBackup"
+        ]
+      ]
+    },
+    "seeds": {
+      "spearman_mean": 0.9100000000000001,
+      "spearman_min": 0.8545454545454546,
+      "top_overlap_mean": 0.9200000000000002,
+      "top_overlap_min": 0.9,
+      "n_features_in_union": 11,
+      "top10_per_run": [
+        [
+          "Contract",
+          "tenure",
+          "MonthlyCharges",
+          "TotalCharges",
+          "OnlineSecurity",
+          "PaymentMethod",
+          "TechSupport",
+          "OnlineBackup",
+          "InternetService",
+          "PaperlessBilling"
+        ],
+        [
+          "Contract",
+          "tenure",
+          "MonthlyCharges",
+          "TotalCharges",
+          "InternetService",
+          "OnlineSecurity",
+          "PaymentMethod",
+          "OnlineBackup",
+          "MultipleLines",
+          "TechSupport"
+        ],
+        [
+          "Contract",
+          "tenure",
+          "MonthlyCharges",
+          "TotalCharges",
+          "InternetService",
+          "OnlineSecurity",
+          "PaymentMethod",
+          "TechSupport",
+          "MultipleLines",
+          "PaperlessBilling"
+        ],
+        [
+          "Contract",
+          "tenure",
+          "MonthlyCharges",
+          "TotalCharges",
+          "InternetService",
+          "OnlineSecurity",
+          "PaymentMethod",
+          "TechSupport",
+          "MultipleLines",
+          "PaperlessBilling"
+        ],
+        [
+          "Contract",
+          "tenure",
+          "MonthlyCharges",
+          "TotalCharges",
+          "OnlineSecurity",
+          "PaymentMethod",
+          "TechSupport",
+          "InternetService",
+          "PaperlessBilling",
+          "OnlineBackup"
+        ]
+      ]
+    }
+  },
+  "calibration": {
+    "model": "LogisticRegression",
+    "brier_train_oof": {
+      "brut": 0.16528174938199378,
+      "isotonic": 0.13541978670004146,
+      "sigmoid": 0.13529960951162523
+    },
+    "brier_test": {
+      "brut": 0.16866296719320806,
+      "isotonic": 0.13877881627635566,
+      "sigmoid": 0.13822844867259232
+    },
+    "ece_test": {
+      "brut": 0.15025941908857898,
+      "isotonic": 0.020278020408390413,
+      "sigmoid": 0.02345304822559443
+    },
+    "auc_test": {
+      "brut": 0.8417034798108968,
+      "isotonic": 0.8410795938928933,
+      "sigmoid": 0.841721563460694
+    },
+    "chosen_method": "sigmoid",
+    "recalibrated": true,
+    "base_rate_test": 0.2654364797728886,
+    "mean_proba_test": {
+      "brut": 0.4156958988614675,
+      "isotonic": 0.2669192201099641,
+      "sigmoid": 0.26772006354897193
+    }
+  }
+}

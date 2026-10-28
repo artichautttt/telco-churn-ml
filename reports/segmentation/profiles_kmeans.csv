@@ -1,0 +1,5 @@
+segment,n_clients,share,churn_rate,share_of_churners,tenure_mean,monthly_charges_mean,month_to_month_share,fiber_share,distinctive
+0,682,0.0968,0.2493,0.091,31.7,42.0,0.5513,0.0,PhoneService=No (100% vs 10%) ; MultipleLines=No phone service (100% vs 10%) ; InternetService=DSL (100% vs 34%) ; MonthlyCharges -0.8 ET (moy. 42.0 vs 64.8)
+1,2738,0.3888,0.4686,0.6865,16.4,74.4,0.9277,0.6658,tenure -0.6 ET (moy. 16.4 vs 32.4) ; DeviceProtection=No (78% vs 44%) ; OnlineBackup=No (75% vs 44%) ; StreamingMovies=No (67% vs 40%)
+2,1526,0.2167,0.074,0.0605,30.5,21.1,0.3434,0.0,sans internet (100% vs 22%) ; MonthlyCharges -1.5 ET (moy. 21.1 vs 64.8) ; PaymentMethod=Mailed check (49% vs 23%) ; TotalCharges -0.7 ET (moy. 662.6 vs 2279.7)
+3,2097,0.2977,0.1445,0.1621,54.7,91.4,0.2074,0.6071,TotalCharges +1.2 ET (moy. 5043.4 vs 2279.7) ; tenure +0.9 ET (moy. 54.7 vs 32.4) ; MonthlyCharges +0.9 ET (moy. 91.4 vs 64.8) ; TechSupport=Yes (61% vs 29%)
