@@ -38,13 +38,15 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from sklearn.base import clone
-from sklearn.metrics import precision_score, recall_score
+from sklearn.metrics import precision_score, recall_score, roc_auc_score
 from sklearn.model_selection import StratifiedKFold, cross_val_predict
 
 from src.train import RANDOM_STATE
 
 THRESHOLDS = np.round(np.arange(0.01, 1.0, 0.01), 2)
+SERVING_CONFIG = "serving_config.json"
 
 
 @dataclass(frozen=True)
@@ -148,9 +150,38 @@ def main():
         "capture_top20": capture_at(y_test, s_served, 0.20),
         "lift_top10": capture_at(y_test, s_served, 0.10) / 0.10,
         "lift_top20": capture_at(y_test, s_served, 0.20) / 0.20,
+        # La recalibration doit preserver le classement : meme AUC.
+        "auc_test_decision_model": float(roc_auc_score(y_test, p_test)),
+        "auc_test_uncalibrated": float(roc_auc_score(y_test, s_served)),
     }
     with open(out / "summary.json", "w") as f:
         json.dump(summary, f, indent=2)
+
+    # Performance de la decision servie (modele + seuil) par contrat et par segment.
+    from src.robustness import group_metrics
+
+    tables = [group_metrics(y_test, p_test, X_test["Contract"], threshold=t_opt).assign(by="contract")]
+    seg_path = mdir / "segments.csv"
+    if seg_path.exists():
+        seg = pd.read_csv(seg_path, index_col="row")["segment"].loc[X_test.index]
+        tables.append(group_metrics(y_test, p_test, seg, threshold=t_opt).assign(by="segment"))
+    by_group = pd.concat(tables, ignore_index=True)
+    by_group.to_csv(out / "performance_by_group_at_threshold.csv", index=False)
+    print(f"\nDecision servie (seuil {t_opt:.2f}) par groupe :\n" + by_group.round(4).to_string(index=False))
+
+    # Configuration lue par l'API : modele servi et seuil de decision.
+    serving = {
+        "model_path": model_file.as_posix(),
+        "threshold": t_opt,
+        "threshold_source": "matrice de couts, probabilites hors-fold du train (src.business)",
+        "costs_hypotheses": asdict(costs),
+    }
+    with open(mdir / SERVING_CONFIG, "w") as f:
+        json.dump(serving, f, indent=2)
+    print(f"Configuration de service ecrite dans {mdir / SERVING_CONFIG} : "
+          f"{model_file.name}, seuil {t_opt:.2f}")
+    print(f"AUC test : modele de decision {summary['auc_test_decision_model']:.6f} | "
+          f"non recalibre {summary['auc_test_uncalibrated']:.6f}")
 
     opt = summary["at_optimal_threshold"]
     d05 = summary["at_default_threshold_0_5"]

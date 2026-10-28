@@ -71,5 +71,6 @@ class CustomerFeatures(BaseModel):
 
 
 class PredictionResponse(BaseModel):
-    churn_probability: float = Field(ge=0, le=1)
-    churn_prediction: Literal[0, 1]
+    churn_probability: float = Field(ge=0, le=1, description="Probabilite de churn calibree")
+    churn_prediction: Literal[0, 1] = Field(description="1 si churn_probability >= threshold")
+    threshold: float = Field(gt=0, lt=1, description="Seuil de decision (matrice de couts)")

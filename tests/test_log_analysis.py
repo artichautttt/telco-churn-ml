@@ -15,7 +15,7 @@ def test_collect_metrics_reads_business_summary(tmp_path):
     (tmp_path / "business").mkdir()
     (tmp_path / "business" / "summary.json").write_text(json.dumps({
         "optimal_threshold_train_oof": 0.3,
-        "at_optimal_threshold": {"total_cost_test": 100.0, "recall": 0.9},
+        "at_optimal_threshold": {"total_cost_test": 100.0, "recall": 0.9, "precision": 0.4},
         "at_default_threshold_0_5": {"total_cost_test": 120.0},
         "capture_top10": 0.3, "capture_top20": 0.5, "lift_top10": 3.0, "lift_top20": 2.5,
     }))

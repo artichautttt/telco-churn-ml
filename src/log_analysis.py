@@ -53,8 +53,11 @@ def collect_metrics(reports: Path = REPORTS) -> dict[str, float]:
               "cost_test_at_optimal": bus["at_optimal_threshold"]["total_cost_test"],
               "cost_test_at_0_5": bus["at_default_threshold_0_5"]["total_cost_test"],
               "recall_test_at_optimal": bus["at_optimal_threshold"]["recall"],
+              "precision_test_at_optimal": bus["at_optimal_threshold"]["precision"],
               "capture_top10": bus["capture_top10"], "capture_top20": bus["capture_top20"],
               "lift_top10": bus["lift_top10"], "lift_top20": bus["lift_top20"]}
+        if "auc_test_decision_model" in bus:
+            m["auc_test_served_calibrated"] = bus["auc_test_decision_model"]
     return {k: float(v) for k, v in m.items()}
 
 

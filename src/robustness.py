@@ -8,10 +8,12 @@ robustness.py -- robustesse des resultats (etape 5).
   5 seeds (nouveau decoupage train/test et nouvelle seed du modele) ;
   correlation de rang de Spearman deux a deux sur l'union des top 10 ;
 - calibration du modele servi : courbe, score de Brier, ECE ; recalibration
-  isotonique et Platt (sigmoid) par CalibratedClassifierCV(cv=5) sur le train
-  set, methode choisie sur le Brier hors-fold du train (le test set ne sert
-  qu'a l'evaluation finale) ; recalibration retenue seulement si elle baisse
-  le Brier ;
+  isotonique et Platt (sigmoid) par CalibratedClassifierCV(cv=5,
+  ensemble=False) sur le train : un seul modele ajuste sur tout le train, suivi
+  d'une fonction monotone apprise hors-fold (Platt : strictement croissante,
+  donc classement et AUC identiques au modele servi) ; methode choisie sur
+  le Brier hors-fold du train (le test set ne sert qu'a l'evaluation
+  finale) ; recalibration retenue seulement si elle baisse le Brier ;
 - performance par segment (etape 3) et par type de contrat.
 
 Usage : python -m src.robustness
@@ -199,7 +201,7 @@ def main():
                                      method="predict_proba", n_jobs=1)[:, 1]}
     calibrated = {}
     for method in ("isotonic", "sigmoid"):
-        cal = CalibratedClassifierCV(clone(served), method=method, cv=5, n_jobs=1)
+        cal = CalibratedClassifierCV(clone(served), method=method, cv=5, ensemble=False, n_jobs=1)
         oof[method] = cross_val_predict(cal, X_train, y_train, cv=inner, method="predict_proba", n_jobs=1)[:, 1]
         calibrated[method] = clone(cal).fit(X_train, y_train)
     brier_train = {k: float(brier_score_loss(y_train, v)) for k, v in oof.items()}

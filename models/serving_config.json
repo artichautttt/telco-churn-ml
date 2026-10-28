@@ -1,0 +1,10 @@
+{
+  "model_path": "models/calibrated_model.pkl",
+  "threshold": 0.18,
+  "threshold_source": "matrice de couts, probabilites hors-fold du train (src.business)",
+  "costs_hypotheses": {
+    "action_cost": 50.0,
+    "churn_loss": 500.0,
+    "success_rate": 0.5
+  }
+}

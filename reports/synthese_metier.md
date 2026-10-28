@@ -35,7 +35,7 @@ Ces facteurs indiquent des **associations**, pas des causes prouvées.
 - Contacter les **10 % de clients au score le plus élevé** touche **28,6 % des futurs départs**, soit 2,9 fois mieux qu'un tirage au hasard.
 - Contacter les **20 % les plus à risque** en touche **49,7 %**.
 
-Nous avons simulé une campagne avec des hypothèses à remplacer par vos vrais chiffres : une action coûte 50 €, un client perdu coûte 500 €, une action réussit une fois sur deux. Le meilleur compromis consiste à contacter les clients dont le risque estimé dépasse **18 %**. Cela représente 52 % des clients et permet de toucher 89 % des futurs départs.
+Nous avons simulé une campagne avec des hypothèses à remplacer par vos vrais chiffres : une action coûte 50 €, un client perdu coûte 500 €, une action réussit une fois sur deux. Le meilleur compromis consiste à contacter les clients dont le risque estimé dépasse **18 %**. Cela représente 52 % des clients et permet de toucher 89 % des futurs départs ; parmi les clients signalés, 45 % partiraient effectivement. C'est le réglage utilisé par l'outil de prévision.
 
 Sur l'échantillon de test (1 409 clients), voici le coût total selon la stratégie :
 
@@ -43,13 +43,13 @@ Sur l'échantillon de test (1 409 clients), voici le coût total selon la strat�
 |---|---|
 | Ne rien faire | 187 000 € |
 | Contacter tout le monde | 163 950 € |
-| Contacter les clients au risque estimé supérieur à 50 % | 150 050 € |
-| **Contacter les clients au risque estimé supérieur à 18 %** | **140 400 €** |
+| Contacter les clients au risque estimé supérieur à 50 % | 150 100 € |
+| **Contacter les clients au risque estimé supérieur à 18 %** | **140 300 €** |
 
 Le seuil optimal change dès que les coûts changent. Il faut le recalculer avec les vrais chiffres.
 
 ## Fiabilité et limites
 
-- **Qualité du classement.** Un client qui va partir reçoit un score plus élevé qu'un client qui va rester dans 84 % des cas (AUC 0,842, intervalle de confiance à 95 % : 0,819 à 0,862). Avec les réglages par défaut, le modèle repère 78 % des départs.
-- **Points faibles.** Le modèle repère mal les départs chez les clients engagés et dans les profils B et C. Ces départs sont rares et moins prévisibles. Le test ne compte que 25 départs dans le profil C, et le modèle n'en repère aucun avec le réglage par défaut.
+- **Qualité du classement.** Un client qui va partir reçoit un score plus élevé qu'un client qui va rester dans 84 % des cas (AUC 0,842, intervalle de confiance à 95 % : 0,819 à 0,862). Au réglage retenu (risque supérieur à 18 %), le modèle repère 89 % des départs. Le score de risque est calibré : un client à 30 % part environ trois fois sur dix.
+- **Points faibles.** Le même seuil s'applique à tous les clients. Au réglage retenu, le modèle repère 63 % des départs du profil B et 64 % de ceux du profil C, mais avec beaucoup de fausses alertes (environ 3 alertes justes sur 10). Il ne repère aucun des 9 départs de clients engagés deux ans. Un seuil propre à chaque profil serait une piste, mais il faudrait plus de données : le test ne compte que 25 départs dans le profil C.
 - **Données.** Il s'agit d'un jeu fictif, figé à une date, sans historique d'usage ni de réclamations. Un vrai projet demanderait des données réelles et datées, puis un test terrain avant de généraliser une action.
