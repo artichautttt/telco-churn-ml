@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Installer les dependances (sans Jupyter)
+        run: |
+          grep -v -E '^(jupyter|jupytext)$' requirements.txt > requirements-ci.txt
+          python -m pip install --upgrade pip
+          pip install -r requirements-ci.txt
+
+      - name: Ruff
+        run: ruff check src tests scripts
+
+      - name: Pytest
+        # Pas d'acces GCP en CI : les tests marques `bigquery` sont ignores
+        # (tests/conftest.py) ; les tests qui chargent les modeles entraines
+        # sont ignores car les .pkl ne sont pas versionnes.
+        run: pytest tests -q -rs

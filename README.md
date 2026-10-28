@@ -1,5 +1,7 @@
 # Telco Customer Churn -- Prediction de desabonnement client
 
+[![CI](https://github.com/artichautttt/telco-churn-ml/actions/workflows/ci.yml/badge.svg)](https://github.com/artichautttt/telco-churn-ml/actions/workflows/ci.yml)
+
 Projet de machine learning classique (from scratch, scikit-learn) : predire
 si un client d'un operateur telecom va resilier son abonnement (churn), a
 partir de ses donnees contractuelles et d'usage.
@@ -396,6 +398,11 @@ python scripts/run_all.py --steps robustness business   # etapes choisies, dans 
 pytest tests/ -q                 # tests (ceux sur les modeles necessitent run_all.py)
 ruff check src tests scripts
 ```
+
+**CI** (`.github/workflows/ci.yml`) : a chaque push sur `main` et a chaque
+PR, ruff puis pytest sur Python 3.11. Pas d'acces BigQuery en CI : les tests
+marques `bigquery` sont ignores (`tests/conftest.py`), comme les tests qui
+chargent les modeles entraines (`.pkl` non versionnes).
 
 `run_all.py` enchaine train, evaluate, interpret, segmentation, interactions,
 robustness, business et le logging MLflow ; il s'arrete a la premiere etape
