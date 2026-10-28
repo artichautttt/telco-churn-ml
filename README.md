@@ -399,11 +399,21 @@ pytest tests/ -q                 # tests (ceux sur les modeles necessitent run_a
 ruff check src tests scripts
 ```
 
-**CI** (`.github/workflows/ci.yml`) : a chaque push sur `main` et a chaque
-PR, ruff puis pytest sur Python 3.12 (version minimale des dependances
-figees : numpy 2.5, xgboost 3.4 et shap 0.52 exigent Python >= 3.12). Pas d'acces BigQuery en CI : les tests
-marques `bigquery` sont ignores (`tests/conftest.py`), comme les tests qui
-chargent les modeles entraines (`.pkl` non versionnes).
+**CI** (`.github/workflows/ci.yml`, actions `checkout@v7` et
+`setup-python@v7`) : a chaque push sur `main` et a chaque PR, sur Python 3.12
+(version minimale des dependances figees : numpy 2.5, xgboost 3.4 et shap
+0.52 exigent Python >= 3.12) :
+1. `ruff check` ;
+2. `python -m src.build_serving` (~10 s) : produit seulement les artefacts
+   de l'API -- regression logistique, recalibration, seuil de la matrice de
+   couts -- avec les memes fonctions et seeds que la chaine complete, sans
+   comparaison de modeles, segmentation ni SHAP ;
+3. verification que le seuil recalcule est celui de
+   `models/serving_config.json` (versionne) ;
+4. `pytest` : tous les tests tournent, y compris ceux de l'API. Pas d'acces
+   BigQuery en CI : les tests marques `bigquery` seraient ignores
+   (`tests/conftest.py`) ; aucun test actuel n'en depend (ceux de
+   `src.bq_eda` utilisent un faux client).
 
 `run_all.py` enchaine train, evaluate, interpret, segmentation, interactions,
 robustness, business et le logging MLflow ; il s'arrete a la premiere etape
@@ -414,7 +424,8 @@ haut).
 
 Les `.pkl` n'etant pas versionnes, les tests de `tests/test_api.py` qui
 chargent les modeles sont ignores (skipped) tant que
-`python scripts/run_all.py` n'a pas ete lance.
+`python scripts/run_all.py` ou `python -m src.build_serving` n'a pas ete
+lance.
 
 ## Suivi des experiences (MLflow)
 

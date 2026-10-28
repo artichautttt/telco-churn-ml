@@ -77,6 +77,27 @@ def optimal_threshold(y_true, y_proba, costs: Costs, thresholds=THRESHOLDS) -> t
     return float(thresholds[int(np.argmin(curve))]), curve
 
 
+def cost_threshold_from_oof(model, X_train, y_train, costs: Costs) -> tuple[float, np.ndarray]:
+    """Seuil optimal sur les probabilites hors-fold (CV 5-fold) du train."""
+    cv = StratifiedKFold(5, shuffle=True, random_state=RANDOM_STATE)
+    oof = cross_val_predict(clone(model), X_train, y_train, cv=cv, method="predict_proba", n_jobs=1)[:, 1]
+    return optimal_threshold(y_train, oof, costs)
+
+
+def write_serving_config(mdir: Path, model_file: Path, threshold: float, costs: Costs) -> Path:
+    """Ecrit la configuration lue par l'API (modele servi + seuil de decision)."""
+    serving = {
+        "model_path": Path(model_file).as_posix(),
+        "threshold": threshold,
+        "threshold_source": "matrice de couts, probabilites hors-fold du train (src.business)",
+        "costs_hypotheses": asdict(costs),
+    }
+    path = Path(mdir) / SERVING_CONFIG
+    with open(path, "w") as f:
+        json.dump(serving, f, indent=2)
+    return path
+
+
 def gains_curve(y_true, scores) -> tuple[np.ndarray, np.ndarray]:
     """(part des clients contactes, part des churners captes), tri par score decroissant."""
     y_true = np.asarray(y_true)
@@ -115,9 +136,7 @@ def main():
     model = joblib.load(model_file)
     served = joblib.load(mdir / "best_model.pkl")
 
-    cv = StratifiedKFold(5, shuffle=True, random_state=RANDOM_STATE)
-    oof = cross_val_predict(clone(model), X_train, y_train, cv=cv, method="predict_proba", n_jobs=1)[:, 1]
-    t_opt, curve_train = optimal_threshold(y_train, oof, costs)
+    t_opt, curve_train = cost_threshold_from_oof(model, X_train, y_train, costs)
     p_test = model.predict_proba(X_test)[:, 1]
 
     def decision_stats(t):
@@ -170,14 +189,7 @@ def main():
     print(f"\nDecision servie (seuil {t_opt:.2f}) par groupe :\n" + by_group.round(4).to_string(index=False))
 
     # Configuration lue par l'API : modele servi et seuil de decision.
-    serving = {
-        "model_path": model_file.as_posix(),
-        "threshold": t_opt,
-        "threshold_source": "matrice de couts, probabilites hors-fold du train (src.business)",
-        "costs_hypotheses": asdict(costs),
-    }
-    with open(mdir / SERVING_CONFIG, "w") as f:
-        json.dump(serving, f, indent=2)
+    write_serving_config(mdir, model_file, t_opt, costs)
     print(f"Configuration de service ecrite dans {mdir / SERVING_CONFIG} : "
           f"{model_file.name}, seuil {t_opt:.2f}")
     print(f"AUC test : modele de decision {summary['auc_test_decision_model']:.6f} | "

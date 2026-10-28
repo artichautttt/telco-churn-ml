@@ -9,9 +9,9 @@ jobs:
   lint-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -25,8 +25,15 @@ jobs:
       - name: Ruff
         run: ruff check src tests scripts
 
+      - name: Artefacts de l'API (regression logistique, recalibration, seuil)
+        # ~10 s : sans comparaison de modeles, segmentation ni SHAP.
+        run: python -m src.build_serving
+
+      - name: Seuil reproductible
+        # Le seuil recalcule doit etre celui de la configuration versionnee.
+        run: git diff --exit-code models/serving_config.json
+
       - name: Pytest
         # Pas d'acces GCP en CI : les tests marques `bigquery` sont ignores
-        # (tests/conftest.py) ; les tests qui chargent les modeles entraines
-        # sont ignores car les .pkl ne sont pas versionnes.
+        # (tests/conftest.py).
         run: pytest tests -q -rs
