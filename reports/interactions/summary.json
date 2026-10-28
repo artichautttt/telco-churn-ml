@@ -1,0 +1,181 @@
+{
+  "sample_size": 1000,
+  "top_interactions": [
+    {
+      "feature_a": "tenure",
+      "feature_b": "TotalCharges",
+      "strength": 0.39370351007860155,
+      "mechanical": true
+    },
+    {
+      "feature_a": "tenure",
+      "feature_b": "Contract",
+      "strength": 0.29397488324253934,
+      "mechanical": false
+    },
+    {
+      "feature_a": "MonthlyCharges",
+      "feature_b": "TotalCharges",
+      "strength": 0.18119083517231047,
+      "mechanical": true
+    },
+    {
+      "feature_a": "tenure",
+      "feature_b": "MonthlyCharges",
+      "strength": 0.17692324995901434,
+      "mechanical": false
+    },
+    {
+      "feature_a": "InternetService",
+      "feature_b": "Contract",
+      "strength": 0.13415165883919689,
+      "mechanical": false
+    },
+    {
+      "feature_a": "tenure",
+      "feature_b": "PaymentMethod",
+      "strength": 0.12150085123159807,
+      "mechanical": false
+    },
+    {
+      "feature_a": "MonthlyCharges",
+      "feature_b": "Contract",
+      "strength": 0.12120555735239759,
+      "mechanical": false
+    },
+    {
+      "feature_a": "MonthlyCharges",
+      "feature_b": "PaymentMethod",
+      "strength": 0.0792920656053393,
+      "mechanical": false
+    },
+    {
+      "feature_a": "TotalCharges",
+      "feature_b": "PaymentMethod",
+      "strength": 0.07687574405803753,
+      "mechanical": false
+    },
+    {
+      "feature_a": "MonthlyCharges",
+      "feature_b": "MultipleLines",
+      "strength": 0.07304706043261103,
+      "mechanical": false
+    }
+  ],
+  "top_interactions_without_totalcharges": [
+    {
+      "feature_a": "tenure",
+      "feature_b": "Contract",
+      "strength": 0.29397488324253934,
+      "mechanical": false
+    },
+    {
+      "feature_a": "tenure",
+      "feature_b": "MonthlyCharges",
+      "strength": 0.17692324995901434,
+      "mechanical": false
+    },
+    {
+      "feature_a": "InternetService",
+      "feature_b": "Contract",
+      "strength": 0.13415165883919689,
+      "mechanical": false
+    },
+    {
+      "feature_a": "tenure",
+      "feature_b": "PaymentMethod",
+      "strength": 0.12150085123159807,
+      "mechanical": false
+    },
+    {
+      "feature_a": "MonthlyCharges",
+      "feature_b": "Contract",
+      "strength": 0.12120555735239759,
+      "mechanical": false
+    },
+    {
+      "feature_a": "MonthlyCharges",
+      "feature_b": "PaymentMethod",
+      "strength": 0.0792920656053393,
+      "mechanical": false
+    },
+    {
+      "feature_a": "MonthlyCharges",
+      "feature_b": "MultipleLines",
+      "strength": 0.07304706043261103,
+      "mechanical": false
+    },
+    {
+      "feature_a": "OnlineSecurity",
+      "feature_b": "Contract",
+      "strength": 0.07243409200620954,
+      "mechanical": false
+    },
+    {
+      "feature_a": "StreamingMovies",
+      "feature_b": "Contract",
+      "strength": 0.06854259723273572,
+      "mechanical": false
+    },
+    {
+      "feature_a": "tenure",
+      "feature_b": "OnlineSecurity",
+      "strength": 0.061238950784019835,
+      "mechanical": false
+    }
+  ],
+  "plotted_pairs": [
+    [
+      "tenure",
+      "Contract"
+    ],
+    [
+      "MonthlyCharges",
+      "InternetService"
+    ],
+    [
+      "tenure",
+      "TotalCharges"
+    ],
+    [
+      "MonthlyCharges",
+      "TotalCharges"
+    ],
+    [
+      "tenure",
+      "MonthlyCharges"
+    ],
+    [
+      "InternetService",
+      "Contract"
+    ]
+  ],
+  "tenure_effect_slope_log_odds_per_month": {
+    "logistic_regression_all_contracts": -0.047060807733939315,
+    "xgboost_by_contract": {
+      "Month-to-month": -0.034676023647400654,
+      "One year": -0.022807195491037168,
+      "Two year": -0.032635575314025195
+    }
+  },
+  "logistic_coefficients_related": {
+    "tenure": -1.1561,
+    "MonthlyCharges": -0.6388,
+    "InternetService_DSL": -0.6426,
+    "InternetService_Fiber optic": 0.656,
+    "InternetService_No": -0.3011,
+    "Contract_Month-to-month": 0.6253,
+    "Contract_One year": -0.1018,
+    "Contract_Two year": -0.8112
+  },
+  "logistic_cv_auc": {
+    "baseline_mean": 0.845934143355529,
+    "baseline_std": 0.01243410479210694,
+    "with_interaction_terms_mean": 0.8469122795316041,
+    "with_interaction_terms_std": 0.013013093457927574,
+    "interaction_terms": [
+      "tenure x Contract",
+      "MonthlyCharges x InternetService"
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "k_kprototypes": 3,
+  "k_kmeans": 4,
+  "adjusted_rand_index": 0.6498729976245419,
+  "rule": "max silhouette for k in 3..5",
+  "selection_sample": 3000,
+  "silhouette_sample": 2000,
+  "n_init_selection": 3,
+  "n_init_final": 5,
+  "random_state": 42
+}

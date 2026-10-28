@@ -1,0 +1,5 @@
+segment,spearman_vs_global,top_factors
+global,1.0,"Contract, tenure, MonthlyCharges, TotalCharges, OnlineSecurity"
+0,0.9719,"Contract, tenure, InternetService, TotalCharges, MonthlyCharges"
+1,0.9842,"Contract, tenure, TotalCharges, MonthlyCharges, OnlineSecurity"
+2,0.9684,"Contract, MonthlyCharges, tenure, TotalCharges, OnlineSecurity"

@@ -1,0 +1,35 @@
+{
+  "costs_hypotheses": {
+    "action_cost": 50.0,
+    "churn_loss": 500.0,
+    "success_rate": 0.5
+  },
+  "probabilities_from": "calibrated_model.pkl",
+  "theoretical_threshold_if_calibrated": 0.2,
+  "optimal_threshold_train_oof": 0.18,
+  "at_optimal_threshold": {
+    "threshold": 0.18,
+    "total_cost_test": 140300.0,
+    "contacted_share": 0.5223562810503903,
+    "recall": 0.893048128342246,
+    "precision": 0.453804347826087
+  },
+  "at_default_threshold_0_5": {
+    "threshold": 0.5,
+    "total_cost_test": 150100.0,
+    "contacted_share": 0.22498225691980128,
+    "recall": 0.5641711229946524,
+    "precision": 0.6656151419558359
+  },
+  "cost_contact_nobody_test": 187000.0,
+  "cost_contact_everybody_test": 163950.0,
+  "n_test": 1409,
+  "n_churners_test": 374,
+  "gains_scores_from": "best_model.pkl",
+  "capture_top10": 0.28609625668449196,
+  "capture_top20": 0.49732620320855614,
+  "lift_top10": 2.8609625668449192,
+  "lift_top20": 2.4866310160427805,
+  "auc_test_decision_model": 0.8417034798108968,
+  "auc_test_uncalibrated": 0.8417034798108968
+}
