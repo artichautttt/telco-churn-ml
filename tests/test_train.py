@@ -6,7 +6,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.train import compute_scale_pos_weight, make_models, select_model  # noqa: E402
+from src.train import compute_scale_pos_weight, make_models, select_model
 
 
 def cv(auc_recall: dict) -> dict:

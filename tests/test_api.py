@@ -6,7 +6,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from src.api import app, load_model  # noqa: E402
+from src.api import app, load_model
 
 MODEL_PATH = ROOT / "models" / "best_model.pkl"
 
