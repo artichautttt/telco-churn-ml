@@ -13,8 +13,12 @@ Authentification : Application Default Credentials
 (chargement par job, pas de streaming insert).
 
 Usage :
-    python -m src.bq_eda --project MON_PROJET            # charge + execute
-    python -m src.bq_eda --project MON_PROJET --skip-load
+    python -m src.bq_eda --project MON_PROJET            # cree le dataset telco_churn si besoin
+    python -m src.bq_eda --project MON_PROJET --dataset MON_DATASET
+        # ecrit dans un dataset EXISTANT sans tenter de le creer : seuls les
+        # droits de creer une table et de lancer des jobs sont necessaires
+        # (ex. roles BigQuery Data Editor sur le dataset + Job User sur le projet)
+    python -m src.bq_eda --project MON_PROJET --dataset MON_DATASET --skip-load
 Projet par defaut : variable BQ_PROJECT, sinon le projet des ADC.
 Les fichiers SQL utilisent le placeholder {table} (nom complet de la table).
 """
@@ -129,13 +133,16 @@ def results_match(bq: pd.DataFrame, ref: pd.DataFrame) -> bool:
     )
 
 
-def load_table(client, df: pd.DataFrame, table_id: str, location: str) -> None:
+def load_table(client, df: pd.DataFrame, table_id: str, location: str,
+               create_dataset: bool = True) -> None:
+    """Charge df dans table_id (remplacee). create_dataset=False : le dataset
+    doit deja exister, aucun appel de creation n'est fait."""
     from google.cloud import bigquery
 
-    dataset_id = table_id.rsplit(".", 1)[0]
-    ds = bigquery.Dataset(dataset_id)
-    ds.location = location
-    client.create_dataset(ds, exists_ok=True)
+    if create_dataset:
+        ds = bigquery.Dataset(table_id.rsplit(".", 1)[0])
+        ds.location = location
+        client.create_dataset(ds, exists_ok=True)
     job_config = bigquery.LoadJobConfig(
         schema=[bigquery.SchemaField(c, t, mode=m) for c, t, m in SCHEMA],
         write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
@@ -151,7 +158,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", default="data/raw/telco_churn.csv")
     parser.add_argument("--project", default=os.environ.get("BQ_PROJECT"))
-    parser.add_argument("--dataset", default=DEFAULT_DATASET)
+    parser.add_argument("--dataset", default=None,
+                        help="dataset EXISTANT ou ecrire (pas de creation). "
+                             f"Absent : '{DEFAULT_DATASET}', cree si besoin.")
     parser.add_argument("--table", default=DEFAULT_TABLE)
     parser.add_argument("--location", default=DEFAULT_LOCATION)
     parser.add_argument("--skip-load", action="store_true")
@@ -160,11 +169,12 @@ def main():
     from google.cloud import bigquery
 
     client = bigquery.Client(project=args.project, location=args.location)
-    table_id = f"{client.project}.{args.dataset}.{args.table}"
+    dataset = args.dataset or DEFAULT_DATASET
+    table_id = f"{client.project}.{dataset}.{args.table}"
 
     df = prepare_for_bq(pd.read_csv(args.data))
     if not args.skip_load:
-        load_table(client, df, table_id, args.location)
+        load_table(client, df, table_id, args.location, create_dataset=args.dataset is None)
 
     refs = pandas_reference(df)
     OUT_DIR.mkdir(parents=True, exist_ok=True)

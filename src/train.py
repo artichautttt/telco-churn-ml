@@ -75,7 +75,7 @@ def make_models(scale_pos_weight: float) -> dict:
             max_iter=1000, class_weight="balanced", random_state=RANDOM_STATE
         ),
         "random_forest": RandomForestClassifier(
-            n_estimators=300, class_weight="balanced", random_state=RANDOM_STATE, n_jobs=-1
+            n_estimators=300, class_weight="balanced", random_state=RANDOM_STATE, n_jobs=1
         ),
         "xgboost": XGBClassifier(
             n_estimators=300,
@@ -84,7 +84,7 @@ def make_models(scale_pos_weight: float) -> dict:
             eval_metric="logloss",
             scale_pos_weight=scale_pos_weight,
             random_state=RANDOM_STATE,
-            n_jobs=-1,
+            n_jobs=1,
         ),
     }
 
@@ -99,7 +99,7 @@ def cross_validate_models(X_train, y_train, preprocessor, models: dict) -> dict:
     results = {}
     for name, model in models.items():
         scores = cross_validate(
-            build_pipeline(model, preprocessor), X_train, y_train, cv=cv, scoring=scoring, n_jobs=-1
+            build_pipeline(model, preprocessor), X_train, y_train, cv=cv, scoring=scoring, n_jobs=1
         )
         results[name] = {
             metric: {

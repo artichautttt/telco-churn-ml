@@ -67,3 +67,41 @@ def test_results_match_ignores_row_order(df):
     broken = ref.copy()
     broken.loc[0, "n_churners"] += 1
     assert not results_match(broken, ref)
+
+
+class FakeJob:
+    def result(self):
+        return self
+
+
+class FakeClient:
+    def __init__(self, n_rows):
+        self.calls, self.n_rows = [], n_rows
+
+    def create_dataset(self, *a, **k):
+        self.calls.append("create_dataset")
+
+    def load_table_from_dataframe(self, *a, **k):
+        self.calls.append("load")
+        return FakeJob()
+
+    def get_table(self, table_id):
+        return type("T", (), {"num_rows": self.n_rows})()
+
+
+def test_existing_dataset_is_not_created(df):
+    from src.bq_eda import load_table
+
+    client = FakeClient(len(df))
+    load_table(client, df, "p.existing_ds.customers", "EU", create_dataset=False)
+    assert client.calls == ["load"]
+
+
+def test_default_creates_dataset_and_checks_row_count(df):
+    from src.bq_eda import load_table
+
+    client = FakeClient(len(df))
+    load_table(client, df, "p.telco_churn.customers", "EU")
+    assert client.calls == ["create_dataset", "load"]
+    with pytest.raises(RuntimeError):
+        load_table(FakeClient(len(df) - 1), df, "p.ds.t", "EU", create_dataset=False)

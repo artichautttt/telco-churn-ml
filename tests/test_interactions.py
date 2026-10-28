@@ -12,6 +12,8 @@ from src.interactions import (
     aggregate_interactions,
     rank_pairs,
     slope_by_group,
+    stratified_sample,
+    without_feature,
 )
 
 
@@ -54,3 +56,25 @@ def test_interaction_terms_adds_products_for_non_reference_levels():
     assert "tenure_x_Contract=One year" in Z and "tenure_x_Contract=Month-to-month" not in Z
     assert list(Z["tenure_x_Contract=Two year"]) == [0, 0, 3]
     assert list(Z["MonthlyCharges_x_InternetService=Fiber optic"]) == [0, 20.0, 0]
+
+
+def test_mechanical_pairs_flagged_and_filtered():
+    feats = ["tenure", "TotalCharges", "Contract"]
+    agg = np.zeros((1, 3, 3))
+    agg[:, 0, 1] = agg[:, 1, 0] = 1.0   # tenure x TotalCharges (mecanique)
+    agg[:, 0, 2] = agg[:, 2, 0] = 0.5   # tenure x Contract
+    ranking = rank_pairs(agg, feats)
+    assert bool(ranking.iloc[0]["mechanical"]) is True
+    assert not ranking[ranking["feature_b"] == "Contract"]["mechanical"].any()
+    informative = without_feature(ranking)
+    assert "TotalCharges" not in set(informative["feature_a"]) | set(informative["feature_b"])
+    assert tuple(informative.iloc[0][["feature_a", "feature_b"]]) == ("tenure", "Contract")
+
+
+def test_stratified_sample_size_and_rate():
+    X = pd.DataFrame({"a": range(2000)})
+    y = pd.Series([1] * 500 + [0] * 1500)
+    Xs, ys = stratified_sample(X, y, 1000)
+    assert len(Xs) == 1000 and ys.mean() == 0.25
+    Xa, _ = stratified_sample(X, y, 5000)
+    assert len(Xa) == 2000

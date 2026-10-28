@@ -1,11 +1,18 @@
 """
 interactions.py -- interactions entre variables (etape 4).
 
-- valeurs d'interaction SHAP (TreeExplainer) du pipeline XGBoost sur le test
-  set, agregees par variable d'origine (somme des blocs one-hot) ;
-- classement des paires par force d'interaction moyenne |phi_ij + phi_ji| ;
+- valeurs d'interaction SHAP (TreeExplainer) du pipeline XGBoost sur un
+  echantillon stratifie (sur Churn) de 1 000 clients du test set (seed 42,
+  pour limiter la memoire), agregees par variable d'origine ;
+- classement des paires par force d'interaction moyenne |phi_ij + phi_ji|.
+  Les paires TotalCharges x tenure et TotalCharges x MonthlyCharges sont
+  marquees `mechanical` : TotalCharges ~ tenure x MonthlyCharges, donc leur
+  interaction reflete une construction de la variable, pas un comportement.
+  Un second classement exclut TotalCharges pour faire ressortir les
+  interactions informatives ;
 - dependence plots croises : tenure x Contract, MonthlyCharges x
-  InternetService, et les 3 paires les plus fortes ;
+  InternetService, les 3 paires les plus fortes et les 3 plus fortes sans
+  TotalCharges ;
 - comparaison avec la regression logistique : coefficients, pente de l'effet
   de tenure par type de contrat (constante en logistique, variable en
   XGBoost), et gain d'AUC CV quand on ajoute explicitement ces deux termes
@@ -37,6 +44,8 @@ from src.shap_utils import feature_origin, transform
 from src.train import RANDOM_STATE
 
 REQUESTED_PAIRS = [("tenure", "Contract"), ("MonthlyCharges", "InternetService")]
+INTERACTION_SAMPLE = 1000
+MECHANICAL_PAIRS = {frozenset(("tenure", "TotalCharges")), frozenset(("MonthlyCharges", "TotalCharges"))}
 
 
 def aggregate_interactions(inter: np.ndarray, origin: list[str]) -> tuple[np.ndarray, list[str]]:
@@ -55,7 +64,25 @@ def rank_pairs(agg: np.ndarray, feats: list[str]) -> pd.DataFrame:
         {"feature_a": feats[i], "feature_b": feats[j], "strength": float(strength[i, j])}
         for i in range(len(feats)) for j in range(i + 1, len(feats))
     ]
-    return pd.DataFrame(rows).sort_values("strength", ascending=False).reset_index(drop=True)
+    df = pd.DataFrame(rows).sort_values("strength", ascending=False).reset_index(drop=True)
+    df["mechanical"] = [frozenset((a, b)) in MECHANICAL_PAIRS
+                        for a, b in zip(df["feature_a"], df["feature_b"])]
+    return df
+
+
+def without_feature(ranking: pd.DataFrame, feature: str = "TotalCharges") -> pd.DataFrame:
+    keep = (ranking["feature_a"] != feature) & (ranking["feature_b"] != feature)
+    return ranking[keep].reset_index(drop=True)
+
+
+def stratified_sample(X: pd.DataFrame, y: pd.Series, n: int, seed: int = RANDOM_STATE):
+    """Echantillon stratifie sur y de n lignes (tout le jeu si n >= len(X))."""
+    if n >= len(X):
+        return X, y
+    from sklearn.model_selection import train_test_split
+
+    Xs, _, ys, _ = train_test_split(X, y, train_size=n, stratify=y, random_state=seed)
+    return Xs, ys
 
 
 def slope_by_group(x: np.ndarray, contrib: np.ndarray, groups: np.ndarray) -> dict:
@@ -149,20 +176,30 @@ def main():
     figs.mkdir(parents=True, exist_ok=True)
 
     split = joblib.load(mdir / "test_split.pkl")
-    X_test, X_train, y_train = split["X_test"], split["X_train"], split["y_train"]
+    X_train, y_train = split["X_train"], split["y_train"]
+    X_test, _ = stratified_sample(split["X_test"], split["y_test"], INTERACTION_SAMPLE)
+    print(f"Interactions SHAP sur {len(X_test)} clients du test set (echantillon stratifie, seed {RANDOM_STATE})")
     xgb = joblib.load(mdir / "xgboost_model.pkl")
     lr = joblib.load(mdir / "best_model.pkl")
 
     Xt, _ = transform(xgb, X_test)
     inter = np.asarray(shap.TreeExplainer(xgb.named_steps["model"]).shap_interaction_values(Xt))
     agg, feats = aggregate_interactions(inter, feature_origin(xgb.named_steps["preprocessor"]))
+    del inter
     ranking = rank_pairs(agg, feats)
     ranking.to_csv(out / "interaction_ranking.csv", index=False)
-    print("Top 10 interactions (XGBoost, test set) :\n" + ranking.head(10).to_string())
+    informative = without_feature(ranking)
+    informative.to_csv(out / "interaction_ranking_without_totalcharges.csv", index=False)
+    print("Top 10 interactions (XGBoost) :\n" + ranking.head(10).to_string())
+    print("\nTop 10 sans TotalCharges :\n" + informative.head(10).to_string())
 
-    top3 = list(ranking.head(3)[["feature_a", "feature_b"]].itertuples(index=False, name=None))
-    pairs = REQUESTED_PAIRS + [p for p in top3 if p not in REQUESTED_PAIRS
-                               and p[::-1] not in REQUESTED_PAIRS]
+    def top_pairs(df, n=3):
+        return list(df.head(n)[["feature_a", "feature_b"]].itertuples(index=False, name=None))
+
+    pairs = list(REQUESTED_PAIRS)
+    for p in top_pairs(ranking) + top_pairs(informative):
+        if frozenset(p) not in {frozenset(q) for q in pairs}:
+            pairs.append(p)
     for a, b in pairs:
         dependence_plot(X_test, agg, feats, a, b, figs / f"dependence_{a}_x_{b}.png")
 
@@ -188,13 +225,15 @@ def main():
         ("preprocessor", interaction_preprocessor(df)),
         ("model", clone(lr.named_steps["model"])),
     ])
-    auc_base = cross_val_score(base, X_train, y_train, cv=cv, scoring="roc_auc")
-    auc_inter = cross_val_score(with_inter, X_train, y_train, cv=cv, scoring="roc_auc")
+    auc_base = cross_val_score(base, X_train, y_train, cv=cv, scoring="roc_auc", n_jobs=1)
+    auc_inter = cross_val_score(with_inter, X_train, y_train, cv=cv, scoring="roc_auc", n_jobs=1)
 
     lr_related = coefs[[n for n in coefs.index
                         if n.startswith(("tenure", "Contract", "MonthlyCharges", "InternetService"))]]
     summary = {
+        "sample_size": len(X_test),
         "top_interactions": ranking.head(10).to_dict(orient="records"),
+        "top_interactions_without_totalcharges": informative.head(10).to_dict(orient="records"),
         "plotted_pairs": [list(p) for p in pairs],
         "tenure_effect_slope_log_odds_per_month": {
             "logistic_regression_all_contracts": lr_slope,

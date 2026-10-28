@@ -119,8 +119,24 @@ def group_metrics(y_true, y_proba, groups, threshold=0.5) -> pd.DataFrame:
 
 def _xgb_with_seed(xgb_pipeline, y, seed):
     p = clone(xgb_pipeline)
-    p.set_params(model__random_state=seed, model__scale_pos_weight=compute_scale_pos_weight(y))
+    p.set_params(model__random_state=seed, model__n_jobs=1,
+                 model__scale_pos_weight=compute_scale_pos_weight(y))
     return p
+
+
+def write_group_performance(mdir: Path, out: Path, X_test, y_test, p_served) -> None:
+    """Performance du modele servi par type de contrat et par segment (etape 3)."""
+    seg_path = mdir / "segments.csv"
+    by_contract = group_metrics(y_test, p_served, X_test["Contract"])
+    by_contract.to_csv(out / "performance_by_contract.csv", index=False)
+    print("\nPar contrat :\n" + by_contract.round(4).to_string(index=False))
+    if seg_path.exists():
+        seg = pd.read_csv(seg_path, index_col="row")["segment"]
+        by_seg = group_metrics(y_test, p_served, seg.loc[X_test.index])
+        by_seg.to_csv(out / "performance_by_segment.csv", index=False)
+        print("\nPar segment (k-prototypes) :\n" + by_seg.round(4).to_string(index=False))
+    else:
+        print(f"{seg_path} absent : lancer `python -m src.segmentation` pour la performance par segment")
 
 
 def main():
@@ -129,6 +145,8 @@ def main():
     parser.add_argument("--model-dir", default="models")
     parser.add_argument("--out-dir", default="reports/robustness")
     parser.add_argument("--fig-dir", default="reports/figures")
+    parser.add_argument("--segments-only", action="store_true",
+                        help="ne recalcule que la performance par contrat et par segment")
     args = parser.parse_args()
     mdir, out, figs = Path(args.model_dir), Path(args.out_dir), Path(args.fig_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -137,6 +155,9 @@ def main():
     split = joblib.load(mdir / "test_split.pkl")
     X_train, y_train, X_test, y_test = (split[k] for k in ("X_train", "y_train", "X_test", "y_test"))
     served = joblib.load(mdir / "best_model.pkl")
+    if args.segments_only:
+        write_group_performance(mdir, out, X_test, y_test, served.predict_proba(X_test)[:, 1])
+        return
     xgb = joblib.load(mdir / "xgboost_model.pkl")
     served_name = type(served.named_steps["model"]).__name__
     origin = feature_origin(xgb.named_steps["preprocessor"])
@@ -175,11 +196,11 @@ def main():
     # 3. Calibration
     inner = StratifiedKFold(5, shuffle=True, random_state=RANDOM_STATE)
     oof = {"brut": cross_val_predict(clone(served), X_train, y_train, cv=inner,
-                                     method="predict_proba")[:, 1]}
+                                     method="predict_proba", n_jobs=1)[:, 1]}
     calibrated = {}
     for method in ("isotonic", "sigmoid"):
-        cal = CalibratedClassifierCV(clone(served), method=method, cv=5)
-        oof[method] = cross_val_predict(cal, X_train, y_train, cv=inner, method="predict_proba")[:, 1]
+        cal = CalibratedClassifierCV(clone(served), method=method, cv=5, n_jobs=1)
+        oof[method] = cross_val_predict(cal, X_train, y_train, cv=inner, method="predict_proba", n_jobs=1)[:, 1]
         calibrated[method] = clone(cal).fit(X_train, y_train)
     brier_train = {k: float(brier_score_loss(y_train, v)) for k, v in oof.items()}
     best_method = min(("isotonic", "sigmoid"), key=brier_train.get)
@@ -214,17 +235,7 @@ def main():
     plt.close(fig)
 
     # 4. Performance par segment et par contrat (modele servi, seuil 0,5)
-    seg_path = mdir / "segments.csv"
-    by_contract = group_metrics(y_test, p_served, X_test["Contract"])
-    by_contract.to_csv(out / "performance_by_contract.csv", index=False)
-    print("\nPar contrat :\n" + by_contract.round(4).to_string(index=False))
-    if seg_path.exists():
-        seg = pd.read_csv(seg_path, index_col="row")["segment"]
-        by_seg = group_metrics(y_test, p_served, seg.loc[X_test.index])
-        by_seg.to_csv(out / "performance_by_segment.csv", index=False)
-        print("\nPar segment (k-prototypes) :\n" + by_seg.round(4).to_string(index=False))
-    else:
-        print(f"{seg_path} absent : lancer `python -m src.segmentation` pour la performance par segment")
+    write_group_performance(mdir, out, X_test, y_test, p_served)
 
     with open(out / "summary.json", "w") as f:
         json.dump(summary, f, indent=2)

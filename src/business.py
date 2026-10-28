@@ -114,7 +114,7 @@ def main():
     served = joblib.load(mdir / "best_model.pkl")
 
     cv = StratifiedKFold(5, shuffle=True, random_state=RANDOM_STATE)
-    oof = cross_val_predict(clone(model), X_train, y_train, cv=cv, method="predict_proba")[:, 1]
+    oof = cross_val_predict(clone(model), X_train, y_train, cv=cv, method="predict_proba", n_jobs=1)[:, 1]
     t_opt, curve_train = optimal_threshold(y_train, oof, costs)
     p_test = model.predict_proba(X_test)[:, 1]
 

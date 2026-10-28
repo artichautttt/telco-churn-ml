@@ -3,7 +3,9 @@ segmentation.py -- typologies de clients (etape 3).
 
 - k-prototypes (donnees mixtes : numeriques standardisees + categorielles
   brutes), compare a un K-means sur variables one-hot + standardisees ;
-- choix de k sur k = 2..8 : courbe de cout (coude) et silhouette. Pour
+- choix de k sur k = 2..8, sur un echantillon stratifie de 3 000 clients
+  (memoire) : courbe de cout (coude) et silhouette ; modele final ajuste sur
+  les 7 043 clients avec le k retenu. Pour
   k-prototypes, la silhouette est calculee sur une distance de Gower
   (echantillon) ; pour K-means, sur la distance euclidienne de l'espace
   encode. Regle : k = silhouette maximale parmi 3..5 (le besoin metier est de
@@ -33,6 +35,7 @@ import pandas as pd
 from scipy.stats import spearmanr
 from sklearn.cluster import KMeans
 from sklearn.metrics import adjusted_rand_score, silhouette_score
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.preprocessing import TARGET, clean_data, load_data, split_X_y
@@ -42,7 +45,10 @@ RANDOM_STATE = 42
 NUMERIC = ["tenure", "MonthlyCharges", "TotalCharges"]
 K_RANGE = range(2, 9)
 K_CHOICES = (3, 4, 5)
-SILHOUETTE_SAMPLE = 2000
+SELECTION_SAMPLE = 3000   # choix de k sur un echantillon stratifie (memoire)
+SILHOUETTE_SAMPLE = 2000  # sous-echantillon pour la matrice de Gower
+N_INIT_SELECTION = 3
+N_INIT_FINAL = 5
 
 
 def split_types(X: pd.DataFrame) -> tuple[list[str], list[str]]:
@@ -75,7 +81,7 @@ def encode_for_kmeans(X: pd.DataFrame) -> np.ndarray:
     return np.hstack([a, b])
 
 
-def fit_kprototypes(X: pd.DataFrame, k: int, n_init: int = 3):
+def fit_kprototypes(X: pd.DataFrame, k: int, n_init: int = N_INIT_SELECTION):
     from kmodes.kprototypes import KPrototypes
 
     num, cat = split_types(X)
@@ -85,7 +91,7 @@ def fit_kprototypes(X: pd.DataFrame, k: int, n_init: int = 3):
         axis=1,
     )
     cat_idx = list(range(len(num), len(num) + len(cat)))
-    model = KPrototypes(n_clusters=k, init="Cao", n_init=n_init, random_state=RANDOM_STATE)
+    model = KPrototypes(n_clusters=k, init="Cao", n_init=n_init, random_state=RANDOM_STATE, n_jobs=1)
     labels = model.fit_predict(data.to_numpy(dtype=object), categorical=cat_idx)
     return labels, float(model.cost_)
 
@@ -176,29 +182,37 @@ def main():
     X, y = split_X_y(df)
     num, cat = split_types(X)
 
+    # Choix de k sur un echantillon stratifie (sur Churn) de SELECTION_SAMPLE
+    # clients ; la silhouette de Gower sur un sous-echantillon de celui-ci.
+    sel_idx, _ = train_test_split(np.arange(len(X)), train_size=min(SELECTION_SAMPLE, len(X) - 1),
+                                  stratify=y, random_state=RANDOM_STATE)
+    X_sel = X.iloc[sel_idx]
     rng = np.random.default_rng(RANDOM_STATE)
-    sample = rng.choice(len(X), size=min(SILHOUETTE_SAMPLE, len(X)), replace=False)
-    num_scaled = StandardScaler().fit_transform(X[num])
-    gower = gower_distance(num_scaled[sample], X[cat].astype(str).to_numpy()[sample])
+    sil = rng.choice(len(X_sel), size=min(SILHOUETTE_SAMPLE, len(X_sel)), replace=False)
+    num_scaled = StandardScaler().fit_transform(X_sel[num])
+    gower = gower_distance(num_scaled[sil], X_sel[cat].astype(str).to_numpy()[sil])
     X_km = encode_for_kmeans(X)
+    X_km_sel = X_km[sel_idx]
 
-    rows, kp_labels, km_labels = [], {}, {}
+    rows = []
     for k in K_RANGE:
-        lab_kp, cost = fit_kprototypes(X, k)
-        km = KMeans(n_clusters=k, n_init=10, random_state=RANDOM_STATE).fit(X_km)
-        kp_labels[k], km_labels[k] = lab_kp, km.labels_
-        sil_kp = silhouette_score(gower, lab_kp[sample], metric="precomputed")
-        sil_km = silhouette_score(X_km[sample], km.labels_[sample])
+        lab_kp, cost = fit_kprototypes(X_sel, k)
+        km = KMeans(n_clusters=k, n_init=10, random_state=RANDOM_STATE).fit(X_km_sel)
+        sil_kp = silhouette_score(gower, lab_kp[sil], metric="precomputed")
+        sil_km = silhouette_score(X_km_sel[sil], km.labels_[sil])
         rows.append({"k": k, "kproto_cost": cost, "kproto_silhouette_gower": sil_kp,
                      "kmeans_inertia": float(km.inertia_), "kmeans_silhouette": sil_km})
         print(f"k={k}  kproto cost={cost:.0f} sil={sil_kp:.4f} | "
-              f"kmeans inertia={km.inertia_:.0f} sil={sil_km:.4f}")
+              f"kmeans inertia={km.inertia_:.0f} sil={sil_km:.4f}", flush=True)
+    del gower
     ksel = pd.DataFrame(rows)
     ksel.to_csv(out / "k_selection.csv", index=False)
 
     k_kp = choose_k(dict(zip(ksel.k, ksel.kproto_silhouette_gower)))
     k_km = choose_k(dict(zip(ksel.k, ksel.kmeans_silhouette)))
-    labels, labels_km = kp_labels[k_kp], km_labels[k_km]
+    # Modeles finaux ajustes sur tout le jeu avec le k retenu.
+    labels, _ = fit_kprototypes(X, k_kp, n_init=N_INIT_FINAL)
+    labels_km = KMeans(n_clusters=k_km, n_init=10, random_state=RANDOM_STATE).fit(X_km).labels_
     ari = adjusted_rand_score(labels, labels_km)
     print(f"\nk retenu : k-prototypes k={k_kp}, K-means k={k_km} ; ARI entre les deux = {ari:.4f}")
 
@@ -235,7 +249,9 @@ def main():
     with open(out / "summary.json", "w") as f:
         json.dump({"k_kprototypes": int(k_kp), "k_kmeans": int(k_km),
                    "adjusted_rand_index": float(ari), "rule": "max silhouette for k in 3..5",
-                   "silhouette_sample": SILHOUETTE_SAMPLE, "random_state": RANDOM_STATE}, f, indent=2)
+                   "selection_sample": len(sel_idx), "silhouette_sample": len(sil),
+                   "n_init_selection": N_INIT_SELECTION, "n_init_final": N_INIT_FINAL,
+                   "random_state": RANDOM_STATE}, f, indent=2)
 
 
 if __name__ == "__main__":
