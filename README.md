@@ -400,7 +400,8 @@ ruff check src tests scripts
 ```
 
 **CI** (`.github/workflows/ci.yml`) : a chaque push sur `main` et a chaque
-PR, ruff puis pytest sur Python 3.11. Pas d'acces BigQuery en CI : les tests
+PR, ruff puis pytest sur Python 3.12 (version minimale des dependances
+figees : numpy 2.5, xgboost 3.4 et shap 0.52 exigent Python >= 3.12). Pas d'acces BigQuery en CI : les tests
 marques `bigquery` sont ignores (`tests/conftest.py`), comme les tests qui
 chargent les modeles entraines (`.pkl` non versionnes).
 
