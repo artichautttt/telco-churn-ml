@@ -1,0 +1,13 @@
+contract,tenure_band,n_clients,n_churners,churn_rate
+Month-to-month,00-12,1994,1024,0.5135
+Month-to-month,13-24,737,278,0.3772
+Month-to-month,25-48,802,264,0.3292
+Month-to-month,49-72,342,89,0.2602
+One year,00-12,124,13,0.1048
+One year,13-24,197,16,0.0812
+One year,25-48,518,55,0.1062
+One year,49-72,634,82,0.1293
+Two year,00-12,68,0,0.0
+Two year,13-24,90,0,0.0
+Two year,25-48,274,6,0.0219
+Two year,49-72,1263,42,0.0333

@@ -149,9 +149,23 @@ python -m src.bq_eda --project MON_PROJET                        # cree le datas
 python -m src.bq_eda --project MON_PROJET --dataset MON_DATASET  # dataset existant, sans creation
 ```
 
-**Non execute dans ce depot** : l'identite utilisee n'avait pas le droit
-`bigquery.datasets.create` sur le projet disponible. Les CSV de
-`reports/sql/` ne sont donc pas encore produits.
+**Execute le 28/10/2026** sur BigQuery (projet `mini-siem-taxi-pipeline`,
+dataset existant `telco_churn`, region US) :
+
+```bash
+python -m src.bq_eda --project mini-siem-taxi-pipeline --dataset telco_churn --location US
+```
+
+Resultats exportes dans `reports/sql/*.csv`, identiques au recoupement
+pandas pour les 5 requetes. Principaux taux de churn :
+
+| Dimension | Taux de churn |
+|---|---|
+| Contrat | sans engagement 42,7 % ; un an 11,3 % ; deux ans 2,8 % |
+| Anciennete | 0-12 mois 47,4 % ; 13-24 mois 28,7 % ; 25-48 mois 20,4 % ; 49-72 mois 9,5 % |
+| Service internet | fibre 41,9 % ; DSL 19,0 % ; sans internet 7,4 % |
+| Paiement | cheque electronique 45,3 % ; cheque papier 19,1 % ; virement auto. 16,7 % ; carte auto. 15,2 % |
+| Contrat x anciennete | sans engagement 0-12 mois : 51,4 % ; deux ans 0-24 mois : 0 % (0 sur 158) |
 
 ### Typologies de clients (`src/segmentation.py`)
 
@@ -335,8 +349,6 @@ Synthese pour une equipe marketing : [`reports/synthese_metier.md`](reports/synt
   plusieurs periodes, et valides sur un jeu independant.
 - Interactions SHAP estimees sur 1 000 clients du test, et choix de k sur
   3 000 clients, pour tenir en memoire.
-- L'EDA BigQuery n'a pas pu etre executee depuis cet environnement (droits
-  GCP).
 
 ## Structure du projet
 
