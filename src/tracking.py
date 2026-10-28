@@ -7,7 +7,7 @@ Structure d'une execution de train.py dans l'experience "telco-churn" :
   nom du modele retenu, et pipeline final (ColumnTransformer + modele)
   logue comme modele MLflow ;
 - un run enfant par modele compare : hyperparametres + metriques de CV
-  (moyenne et ecart-type sur les 5 folds).
+  (moyenne et ecart-type sur les 5 folds) + metriques sur le test set.
 
 Le tracking ne doit jamais faire echouer l'entrainement : si l'ecriture
 echoue, un avertissement est affiche et train.py se termine normalement
@@ -32,6 +32,8 @@ def log_training_run(
     best_pipeline,
     input_example,
     run_params: dict,
+    test_results: dict | None = None,
+    justification: str | None = None,
 ) -> None:
     """Enregistre une execution de train.py dans MLflow ; ne leve jamais d'exception."""
     try:
@@ -42,12 +44,17 @@ def log_training_run(
             best_pipeline=best_pipeline,
             input_example=input_example,
             run_params=run_params,
+            test_results=test_results or {},
+            justification=justification,
         )
     except Exception:
         logger.warning("echec du tracking MLflow ; l'entrainement reste valide.", exc_info=True)
 
 
-def _log_training_run(*, cv_results, models, best_name, best_pipeline, input_example, run_params):
+def _log_training_run(
+    *, cv_results, models, best_name, best_pipeline, input_example, run_params,
+    test_results, justification,
+):
     # mlflow >= 3 exige cet opt-in explicite pour le backend fichier local.
     os.environ.setdefault("MLFLOW_ALLOW_FILE_STORE", "true")
 
@@ -70,8 +77,14 @@ def _log_training_run(*, cv_results, models, best_name, best_pipeline, input_exa
                     for metric, stats in metrics.items()
                     for stat, value in stats.items()
                 })
+                if name in test_results:
+                    mlflow.log_metrics({f"test_{k}": v for k, v in test_results[name].items()})
 
         mlflow.set_tag("best_model", best_name)
+        if justification:
+            mlflow.set_tag("selection_justification", justification)
+        if best_name in test_results:
+            mlflow.log_metrics({f"best_test_{k}": v for k, v in test_results[best_name].items()})
         mlflow.log_metrics({
             f"best_cv_{metric}_mean": stats["mean"]
             for metric, stats in cv_results[best_name].items()

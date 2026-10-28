@@ -32,20 +32,54 @@ facturation).
 
 ## Resultats (chiffres reels, reproductibles avec `random_state=42`)
 
-### Validation croisee (5-fold stratifie, train set)
+### Comparaison des modeles a reequilibrage egal
 
-| Modele | Accuracy | F1 | ROC-AUC |
-|---|---|---|---|
-| **Regression logistique** | 0.749 (+/-0.015) | 0.628 (+/-0.023) | **0.846** (+/-0.012) |
-| Random Forest | 0.778 (+/-0.012) | 0.610 (+/-0.027) | 0.825 (+/-0.011) |
-| XGBoost | 0.797 (+/-0.010) | 0.574 (+/-0.020) | 0.839 (+/-0.009) |
+Avant cette branche, le reequilibrage n'etait pas le meme pour les trois
+modeles : `class_weight="balanced"` pour la regression logistique et la
+random forest, **aucun** pour XGBoost (rappel churn CV de 0,516, artefact de
+ce desequilibre de traitement). Les trois modeles sont maintenant a egalite :
+`class_weight="balanced"` (regression logistique, random forest) et
+`scale_pos_weight = n_negatifs / n_positifs = 2,7686`, calcule sur le train
+set (XGBoost).
 
-**Modele retenu : regression logistique**, meilleur ROC-AUC en CV. Sur ce
-dataset desequilibre, la regression logistique avec `class_weight="balanced"`
-offre le meilleur compromis precision/rappel sur la classe minoritaire
-(churn), ce que l'accuracy seule masquerait -- Random Forest et XGBoost ont
-une accuracy plus elevee mais au prix d'un F1 plus faible (ils sous-predisent
-la classe churn).
+Metriques sur la **classe churn** (seuil 0,5) -- CV 5-fold stratifiee sur le
+train set (moyenne +/- ecart-type) et test set (holdout 20 %, 374 churners
+sur 1 409 clients) :
+
+| Modele | AUC CV | Rappel CV | Precision CV | F1 CV | AUC test | Rappel test | Precision test | F1 test |
+|---|---|---|---|---|---|---|---|---|
+| **Regression logistique** | **0.8459** (+/-0.012) | **0.801** (+/-0.038) | 0.517 (+/-0.019) | **0.628** (+/-0.023) | **0.8417** | **0.783** | 0.505 | 0.614 |
+| Random Forest | 0.8250 (+/-0.011) | 0.656 (+/-0.039) | 0.571 (+/-0.018) | 0.610 (+/-0.027) | 0.8195 | 0.634 | 0.549 | 0.588 |
+| XGBoost (`scale_pos_weight`) | 0.8358 (+/-0.010) | 0.742 (+/-0.035) | 0.543 (+/-0.023) | 0.627 (+/-0.026) | 0.8312 | 0.749 | 0.525 | **0.617** |
+
+Produit par `python -m src.train` (sauvegarde dans `models/cv_results.json`
+et MLflow).
+
+### Modele retenu : regression logistique
+
+**Critere metier.** Pour la retention, rater un client qui va partir (faux
+negatif) coute plus cher qu'une action de retention envoyee a tort (faux
+positif) : le critere principal est le **rappel sur la classe churn**,
+l'AUC servant a verifier que le classement global des clients reste bon.
+
+**Regle de decision** (codee dans `src/train.select_model`, evaluee sur les
+moyennes de CV, le test set restant reserve a l'evaluation) : on garde la
+regression logistique -- plus simple, interpretable par ses coefficients,
+deja servie par l'API -- si son ecart d'AUC avec le meilleur modele est
+inferieur a 0,01 **et** si son rappel churn est au moins equivalent
+(tolerance de 0,01) ; sinon on retient le meilleur modele.
+
+**Resultat.** La regression logistique a a la fois la meilleure AUC CV
+(0,8459 contre 0,8358 pour XGBoost) et le meilleur rappel CV (0,801 contre
+0,742) : elle est conservee, et le test set confirme le meme ordre (AUC
+0,842 vs 0,831 ; rappel 0,783 vs 0,749). XGBoost reequilibre a un F1 test
+equivalent (0,617 vs 0,614) mais capte moins de churners. L'entrainement,
+l'API (`models/best_model.pkl`), MLflow (tag `best_model` et
+`selection_justification`) et ce README designent donc le meme modele.
+
+XGBoost reste entraine et sauvegarde (`models/xgboost_model.pkl`) : c'est le
+modele a arbres utilise pour SHAP `TreeExplainer` et l'analyse des
+interactions.
 
 ### Evaluation sur le test set (holdout, 20 %, jamais vu en CV)
 
@@ -151,7 +185,7 @@ MLflow, un avertissement est affiche et `models/best_model.pkl` reste valide.
 L'API sert le pipeline complet sauvegarde par `train.py`
 (`models/best_model.pkl` : ColumnTransformer + modele dans un seul objet
 joblib), ce qui garantit un pretraitement identique a l'entrainement.
-Le modele servi est celui retenu par `train.py` (meilleur ROC-AUC en CV).
+Le modele servi est celui retenu par la regle de selection de `train.py` (regression logistique, voir plus haut).
 
 ```bash
 python -m src.train                      # si models/best_model.pkl n'existe pas encore
