@@ -1,0 +1,15 @@
+{
+  "psi_watch": 0.1,
+  "psi_alert": 0.25,
+  "alpha": 0.05,
+  "source": "notebooks/03_drift_monitoring : redecoupages sans derive uniquement",
+  "n_draws": 1000,
+  "targets": {
+    "surveillance": 0.1,
+    "alerte": 0.01
+  },
+  "false_alert_rate": {
+    "surveillance": 0.084,
+    "alerte": 0.0
+  }
+}
