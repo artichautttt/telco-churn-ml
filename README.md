@@ -370,6 +370,21 @@ relative de 22,3 % ; faux positifs du test A/A : 5,0 %. Un effet simule de
 serait un manque de puissance, pas une absence d'effet. Les montants du
 notebook sont des calculs sous hypotheses, pas des gains.
 
+## Suivi de derive (derives INJECTEES)
+
+`src/drift.py` mesure la derive des variables (PSI, KS ou chi-deux, correction
+de Benjamini-Hochberg) et des predictions (PSI, part au-dessus du seuil 0,18),
+en trois niveaux (aucun, surveillance, alerte ; convention PSI 0,1 / 0,25).
+`python -m src.drift_report --current test|train|<fichier.csv>` ecrit un
+rapport JSON et Markdown (exemple : `reports/drift/`) et le journalise dans MLflow local.
+**Le jeu IBM Telco n'a aucune derive reelle ; la detection est validee sur des
+derives injectees, pas sur un cas reel** ([notebook 03](notebooks/03_drift_monitoring.ipynb)).
+Sur 1 000 redecoupages sans derive : 8,4 % de fausses alertes en surveillance,
+0 % en alerte (seuils figes avant les scenarios). Anciennete -3 mois et prix
++5 % : alerte dans plus de 99 % des tirages. Derive conceptuelle simulee
+(30 %) : invisible sur X, rappel au seuil 0,18 de 0,894 a 0,675.
+Alternative outillee non utilisee ici : Evidently.
+
 ## Structure du projet
 
 ```
@@ -377,6 +392,7 @@ telco-churn-ml/
 ├── data/raw/telco_churn.csv       # dataset source (IBM, public)
 ├── notebooks/01_eda.ipynb         # exploration (notebook execute)
 ├── notebooks/02_ab_test_retention.ipynb  # test A/B de retention, effet simule
+├── notebooks/03_drift_monitoring.ipynb   # suivi de derive, derives injectees
 ├── src/
 │   ├── preprocessing.py           # chargement + nettoyage + pipeline sklearn
 │   ├── train.py                   # entrainement + comparaison CV des 3 modeles
@@ -391,6 +407,8 @@ telco-churn-ml/
 │   ├── robustness.py              # bootstrap, stabilite SHAP, calibration, perf. par groupe
 │   ├── business.py                # seuil par couts, gains et lift
 │   ├── ab_testing.py              # test A/B : taille d'echantillon, randomisation, tests
+│   ├── drift.py                   # derive : PSI, KS, chi-deux, Benjamini-Hochberg, niveaux d'alerte
+│   ├── drift_report.py            # rapport de derive JSON + Markdown, journalisation MLflow
 │   ├── shap_utils.py              # outils SHAP partages
 │   └── log_analysis.py            # logging MLflow de l'analyse avancee
 ├── sql/                           # EDA en SQL BigQuery (5 requetes)
@@ -398,7 +416,7 @@ telco-churn-ml/
 ├── tests/                         # pytest, un fichier par module
 ├── reports/
 │   ├── synthese_metier.md         # synthese d'une page pour le marketing
-│   ├── segmentation/ interactions/ robustness/ business/   # resultats (csv, json)
+│   ├── segmentation/ interactions/ robustness/ business/ drift/   # resultats (csv, json, md)
 │   └── figures/                   # figures generees
 ├── models/                        # resultats .json versionnes ; modeles .pkl non versionnes
 ├── mlruns/                        # runs MLflow locaux (non versionne)
