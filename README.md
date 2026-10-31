@@ -352,12 +352,31 @@ Synthese pour une equipe marketing : [`reports/synthese_metier.md`](reports/synt
 - Interactions SHAP estimees sur 1 000 clients du test, et choix de k sur
   3 000 clients, pour tenir en memoire.
 
+## Test A/B de retention (effet SIMULE)
+
+[`notebooks/02_ab_test_retention.ipynb`](notebooks/02_ab_test_retention.ipynb)
+(fonctions : `src/ab_testing.py`, tests : `tests/test_ab_testing.py`) deroule un
+test A/B d'une campagne de retention sur les clients du test set au-dessus du
+seuil servi (0,18). **Aucune experience n'a eu lieu** : le jeu est public et
+l'effet de la campagne est **simule** (le controle garde les vrais labels ;
+dans le groupe traite, chaque churner est retenu avec une probabilite
+parametree). Etapes : hypotheses H0/H1, dimensionnement (statsmodels),
+randomisation avec controle du ratio et de l'equilibre, test A/A, test de deux
+proportions, puissance simulee, garde-fou de cout sous les hypotheses du projet.
+Chiffres de l'execution du 31/10/2026 (graines fixes, 2 000 tirages) : 736
+clients cibles dont 334 churners (45,4 %) ; effet minimal detectable : baisse
+relative de 22,3 % ; faux positifs du test A/A : 5,0 %. Un effet simule de
+10 % n'est detecte que dans 21 % des tirages : un resultat non significatif
+serait un manque de puissance, pas une absence d'effet. Les montants du
+notebook sont des calculs sous hypotheses, pas des gains.
+
 ## Structure du projet
 
 ```
 telco-churn-ml/
 ├── data/raw/telco_churn.csv       # dataset source (IBM, public)
 ├── notebooks/01_eda.ipynb         # exploration (notebook execute)
+├── notebooks/02_ab_test_retention.ipynb  # test A/B de retention, effet simule
 ├── src/
 │   ├── preprocessing.py           # chargement + nettoyage + pipeline sklearn
 │   ├── train.py                   # entrainement + comparaison CV des 3 modeles
@@ -371,6 +390,7 @@ telco-churn-ml/
 │   ├── interactions.py            # interactions SHAP, comparaison avec la logistique
 │   ├── robustness.py              # bootstrap, stabilite SHAP, calibration, perf. par groupe
 │   ├── business.py                # seuil par couts, gains et lift
+│   ├── ab_testing.py              # test A/B : taille d'echantillon, randomisation, tests
 │   ├── shap_utils.py              # outils SHAP partages
 │   └── log_analysis.py            # logging MLflow de l'analyse avancee
 ├── sql/                           # EDA en SQL BigQuery (5 requetes)
