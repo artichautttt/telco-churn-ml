@@ -384,6 +384,7 @@ Sur 1 000 redecoupages sans derive : 8,4 % de fausses alertes en surveillance,
 +5 % : alerte dans plus de 99 % des tirages. Derive conceptuelle simulee
 (30 %) : invisible sur X, rappel au seuil 0,18 de 0,894 a 0,675.
 Alternative outillee non utilisee ici : Evidently.
+Le notebook 03 prend environ 17 min en local et n'est pas lance en CI (la CI couvre le module et ses 29 tests).
 
 ## Structure du projet
 
