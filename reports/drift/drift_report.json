@@ -1,0 +1,230 @@
+{
+  "generated_at": "2026-10-31T20:43:51+00:00",
+  "disclaimer": "Jeu public IBM Telco, sans derive reelle connue. La detection a ete validee sur des derives injectees (notebooks/03_drift_monitoring), pas sur un cas reel. Seuils PSI : convention d'usage, pas une regle.",
+  "model": {
+    "path": "models/calibrated_model.pkl",
+    "threshold": 0.18
+  },
+  "reference": {
+    "name": "train",
+    "n": 5634
+  },
+  "current": {
+    "name": "test",
+    "n": 1409
+  },
+  "thresholds": {
+    "psi_watch": 0.1,
+    "psi_alert": 0.25,
+    "alpha": 0.05
+  },
+  "features": [
+    {
+      "variable": "tenure",
+      "type": "numerique",
+      "test": "ks",
+      "psi": 0.00575,
+      "statistic": 0.021176,
+      "p_value": 0.6835,
+      "p_adjusted": 0.929085,
+      "level": "aucun"
+    },
+    {
+      "variable": "MonthlyCharges",
+      "type": "numerique",
+      "test": "ks",
+      "psi": 0.012908,
+      "statistic": 0.032085,
+      "p_value": 0.191154,
+      "p_adjusted": 0.795609,
+      "level": "aucun"
+    },
+    {
+      "variable": "TotalCharges",
+      "type": "numerique",
+      "test": "ks",
+      "psi": 0.007471,
+      "statistic": 0.029577,
+      "p_value": 0.270953,
+      "p_adjusted": 0.858017,
+      "level": "aucun"
+    },
+    {
+      "variable": "gender",
+      "type": "categorielle",
+      "test": "chi2",
+      "psi": 0.000367,
+      "statistic": 0.413832,
+      "p_value": 0.520031,
+      "p_adjusted": 0.929085,
+      "level": "aucun"
+    },
+    {
+      "variable": "SeniorCitizen",
+      "type": "categorielle",
+      "test": "chi2",
+      "psi": 0.000244,
+      "statistic": 0.272943,
+      "p_value": 0.601365,
+      "p_adjusted": 0.929085,
+      "level": "aucun"
+    },
+    {
+      "variable": "Partner",
+      "type": "categorielle",
+      "test": "chi2",
+      "psi": 0.000182,
+      "statistic": 0.204853,
+      "p_value": 0.650832,
+      "p_adjusted": 0.929085,
+      "level": "aucun"
+    },
+    {
+      "variable": "Dependents",
+      "type": "categorielle",
+      "test": "chi2",
+      "psi": 0.000295,
+      "statistic": 0.333422,
+      "p_value": 0.563651,
+      "p_adjusted": 0.929085,
+      "level": "aucun"
+    },
+    {
+      "variable": "PhoneService",
+      "type": "categorielle",
+      "test": "chi2",
+      "psi": 0.001683,
+      "statistic": 1.832113,
+      "p_value": 0.175878,
+      "p_adjusted": 0.795609,
+      "level": "aucun"
+    },
+    {
+      "variable": "MultipleLines",
+      "type": "categorielle",
+      "test": "chi2",
+      "psi": 0.003021,
+      "statistic": 3.355241,
+      "p_value": 0.186818,
+      "p_adjusted": 0.795609,
+      "level": "aucun"
+    },
+    {
+      "variable": "InternetService",
+      "type": "categorielle",
+      "test": "chi2",
+      "psi": 0.000236,
+      "statistic": 0.266889,
+      "p_value": 0.875076,
+      "p_adjusted": 0.929085,
+      "level": "aucun"
+    },
+    {
+      "variable": "OnlineSecurity",
+      "type": "categorielle",
+      "test": "chi2",
+      "psi": 0.000338,
+      "statistic": 0.380999,
+      "p_value": 0.826546,
+      "p_adjusted": 0.929085,
+      "level": "aucun"
+    },
+    {
+      "variable": "OnlineBackup",
+      "type": "categorielle",
+      "test": "chi2",
+      "psi": 0.004434,
+      "statistic": 4.936736,
+      "p_value": 0.084723,
+      "p_adjusted": 0.795609,
+      "level": "aucun"
+    },
+    {
+      "variable": "DeviceProtection",
+      "type": "categorielle",
+      "test": "chi2",
+      "psi": 0.000445,
+      "statistic": 0.500554,
+      "p_value": 0.778585,
+      "p_adjusted": 0.929085,
+      "level": "aucun"
+    },
+    {
+      "variable": "TechSupport",
+      "type": "categorielle",
+      "test": "chi2",
+      "psi": 0.000777,
+      "statistic": 0.869917,
+      "p_value": 0.647292,
+      "p_adjusted": 0.929085,
+      "level": "aucun"
+    },
+    {
+      "variable": "StreamingTV",
+      "type": "categorielle",
+      "test": "chi2",
+      "psi": 0.002794,
+      "statistic": 3.127298,
+      "p_value": 0.209371,
+      "p_adjusted": 0.795609,
+      "level": "aucun"
+    },
+    {
+      "variable": "StreamingMovies",
+      "type": "categorielle",
+      "test": "chi2",
+      "psi": 0.001028,
+      "statistic": 1.153165,
+      "p_value": 0.561815,
+      "p_adjusted": 0.929085,
+      "level": "aucun"
+    },
+    {
+      "variable": "Contract",
+      "type": "categorielle",
+      "test": "chi2",
+      "psi": 0.000144,
+      "statistic": 0.163188,
+      "p_value": 0.921646,
+      "p_adjusted": 0.929085,
+      "level": "aucun"
+    },
+    {
+      "variable": "PaperlessBilling",
+      "type": "categorielle",
+      "test": "chi2",
+      "psi": 0.000101,
+      "statistic": 0.113699,
+      "p_value": 0.735972,
+      "p_adjusted": 0.929085,
+      "level": "aucun"
+    },
+    {
+      "variable": "PaymentMethod",
+      "type": "categorielle",
+      "test": "chi2",
+      "psi": 0.000404,
+      "statistic": 0.453016,
+      "p_value": 0.929085,
+      "p_adjusted": 0.929085,
+      "level": "aucun"
+    }
+  ],
+  "prediction": {
+    "psi": 0.013934,
+    "ks_statistic": 0.02083,
+    "p_value": 0.702871,
+    "threshold": 0.18,
+    "share_above_ref": 0.517749,
+    "share_above_cur": 0.522356,
+    "share_above_diff": 0.004607,
+    "level": "aucun"
+  },
+  "summary": {
+    "n_features": 19,
+    "n_surveillance": 0,
+    "n_alerte": 0,
+    "flagged": [],
+    "overall_level": "aucun"
+  }
+}
